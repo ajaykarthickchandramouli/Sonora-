@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sonora - A Real-Time Audio Visualizer</title>
+    </head>
+    <body>
+        <style>
+            body{
+                background-color: #080b16;
+                display: flex;
+                flex-direction: column;
+            }
+            h1{
+                color: #e8ecf4;
+                align-self: center;
+                text-align: center;
+                text-decoration: underline;
+            }
+
+            .input{
+                align-self: center; 
+                margin-top: 3%;  
+                color: #e8ecf4;    
+            }
+            .audio{
+                align-self: center;
+                margin-top: 15%;
+            }
+            .canvas{
+                align-self: center;
+                margin-top: 5%;
+                border: 2px solid #00f5ff;
+                border-radius: 8px;
+            }
+        </style>
+        <h1>Sonora</h1>
+        <canvas width="1000" height="500" class="canvas">
+        </canvas>
+        <audio class="audio" controls></audio>
+        <input class="input" type="file" accept="audio/*">
+        <script>
+            let input = document.querySelector(".input");
+            let audio = document.querySelector(".audio");
+            let canvas = document.querySelector(".canvas");
+            let width = canvas.width;
+            let height = canvas.height;
+            let ctx = canvas.getContext("2d");
+            let audioContext = new AudioContext;
+            let source = audioContext.createMediaElementSource(audio);
+            let analyser = audioContext.createAnalyser();
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            analyser.fftSize = 256;
+            let dataArray = new Uint8Array(analyser.frequencyBinCount);
+            let heights = new Array(dataArray.length).fill(0);
+            let peaks = new Array(dataArray.length).fill(0);
+            let position = 0;
+            let t = 0;
+            let progress = 0;
+            let bassIntensity = 0;
+            let glowStrength = 0;
+            function animate(){
+                analyser.getByteFrequencyData(dataArray);
+                progress = Number.isFinite(audio.duration) && audio.duration > 0
+                ? audio.currentTime / audio.duration
+                : 0;
+                bassIntensity = 0
+                for(let i = 0; i < 8; i++){
+                    bassIntensity+= dataArray[i];
+                   }
+                bassIntensity /= 8;
+                glowStrength = bassIntensity/255 * 0.2;
+                ctx.clearRect(0, 0, width, height);
+                let gradient = ctx.createRadialGradient(
+                    width / 2, height / 2, 20,
+                    width/2, height/2, 770
+                );
+                gradient.addColorStop(0, `rgba(139, 92, 246, ${glowStrength})`);
+                gradient.addColorStop(1, "rgba(0, 245, 255, 0)");
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+                for(let i = 0; i < dataArray.length; i++){
+                    position = i/(dataArray.length-1);
+                    heights[i] += (dataArray[i] - heights[i]) * 0.3;
+                    if(heights[i] > peaks[i]){
+                        peaks[i] = heights[i];
+                    }
+                    else{
+                        peaks[i] = Math.max(0, peaks[i] - 0.5);
+                    }
+                    if(position <= 0.5){
+                        t = position/0.5;
+                        let r = 238 - (238*t);
+                        let g = 130 - (130*t);
+                        let b = 238 + (17*t);
+                        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                        ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
+                    }
+                    else if(position > 0.5 && position <= 1){
+                        t = (position - 0.5)/0.5;
+                        let r = 0;
+                        let g = 0 + (245*t);
+                        let b = 255
+                        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                        ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
+                    }
+                    ctx.shadowBlur = 15;
+                    ctx.fillRect(i * (width/dataArray.length), height - heights[i], (width/dataArray.length) - 5 , heights[i]);
+                    ctx.fillStyle = "#e8ecf4";
+                    ctx.shadowBlur = 0;
+                    ctx.fillRect(i * (width/dataArray.length), height - peaks[i], (width/dataArray.length) - 5, 3);
+                    ctx.shadowBlur = 15;
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+            audio.addEventListener("play", ()=> audioContext.resume());
+            input.addEventListener("change", file);
+            function file(event){
+                let val =  event.target.files[0];
+                let audio1 = URL.createObjectURL(val);
+                audio.src = audio1;
+            }
+        </script>
+    </body>
+</html>
