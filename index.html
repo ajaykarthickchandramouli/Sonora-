@@ -2,42 +2,193 @@
 <html>
     <head>
         <title>Sonora - A Real-Time Audio Visualizer</title>
+        <link rel="icon" type="image/jpeg" href="Sonora Logo.png">
     </head>
     <body>
         <style>
-            body{
-                background-color: #080b16;
-                display: flex;
-                flex-direction: column;
-            }
-            h1{
-                color: #e8ecf4;
-                align-self: center;
-                text-align: center;
-                text-decoration: underline;
-            }
 
-            .input{
-                align-self: center; 
-                margin-top: 3%;  
-                color: #e8ecf4;    
-            }
-            .audio{
-                align-self: center;
-                margin-top: 15%;
-            }
-            .canvas{
-                align-self: center;
-                margin-top: 5%;
-                border: 2px solid #00f5ff;
-                border-radius: 8px;
-            }
+body {
+    background-color: #080b16;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 24px;
+    color: #e8ecf4;
+    font-family: Arial, sans-serif;
+}
+
+div {
+    display: flex;
+    flex-direction: column;
+}
+
+.headers {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.brand {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.heading {
+    font-size: 32px;
+    margin: 0;
+}
+
+.tagline {
+    font-size: 14px;
+    margin: 4px 0 0;
+    color: #aab5ca;
+}
+
+.logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.sideHeading {
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #00f5ff;
+}
+
+.hero {
+    margin-top: 72px;
+}
+
+.hero h2 {
+    font-size: 42px;
+    margin-bottom: 8px;
+}
+
+.hero h3 {
+    font-size: 18px;
+    font-weight: normal;
+    color: #aab5ca;
+    margin-top: 0;
+}
+
+.canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: none;
+    border-radius: 10px;
+}
+
+.visualizerPanel {
+    align-self: center;
+    margin-top: 24px;
+    padding: 16px;
+    background-color: #0d1222;
+    border: 1px solid #252d46;
+    border-radius: 16px;
+    box-shadow: 0 0 24px rgba(139, 92, 246, 0.08);
+}
+
+.audio {
+    align-self: center;
+    max-width: 100%;
+}
+
+.input {
+    align-self: center;
+    margin-top: 16px;
+    color: #e8ecf4;
+    display: none;
+}
+.control-panel{
+    background-color: #0d1222;
+    display: flex;
+    align-self: center;
+    margin-top: 24px;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #252d46;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+}
+.track-title{
+    font-size: 12px;
+    color: #00f5ff;
+    margin-bottom: 5px;
+}
+.track-name{
+    font-size: 14px;
+    color: #aab5ca;
+    margin-top: 5px;
+}
+.upload-label{
+    background-color: #8b5cf6;
+    color: #ffffff;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
         </style>
-        <h1>Sonora</h1>
-        <canvas width="1000" height="500" class="canvas">
-        </canvas>
+<div class="mainDiv">
+
+    <div class="headers">
+        <div class="brand">
+            <img class="logo" src="Sonora Logo.png" alt="Sonora logo">
+
+            <div class="brand-text">
+                <h1 class="heading">Sonora</h1>
+                <h3 class="tagline">See the sound. Feel the flow.</h3>
+            </div>
+        </div>
+
+        <h2 class="sideHeading">REAL-TIME AUDIO</h2>
+    </div>
+
+    <div class="hero">
+        <h2>Your Sound. Visualised.</h2>
+        <h3>Turn your audio into a living spectrum.</h3>
+    </div>
+
+</div>
+
+<div class="visualizerPanel">
+
+<canvas width="1000" height="500" class="canvas"></canvas>
+
+</div>
+
+<div class="control-panel">
+
+    <div class="track-info">
+        <h3 class="track-title">NOW PLAYING</h3>
+        <p class="track-name">Choose an audio file to begin</p>
+    </div>
+
+    <div class="playback-controls">
         <audio class="audio" controls></audio>
-        <input class="input" type="file" accept="audio/*">
+    </div>
+
+    <div class="upload-section">
+        <label class="upload-label" for="audio-file">
+            Choose Audio File
+        </label>
+        <input class="input" id="audio-file" type="file" accept="audio/*">
+    </div>
+
+</div>
         <script>
             let input = document.querySelector(".input");
             let audio = document.querySelector(".audio");
@@ -59,6 +210,7 @@
             let progress = 0;
             let bassIntensity = 0;
             let glowStrength = 0;
+            let trackName = document.querySelector(".track-name");
             function animate(){
                 analyser.getByteFrequencyData(dataArray);
                 progress = Number.isFinite(audio.duration) && audio.duration > 0
@@ -111,6 +263,21 @@
                     ctx.fillRect(i * (width/dataArray.length), height - peaks[i], (width/dataArray.length) - 5, 3);
                     ctx.shadowBlur = 15;
                 }
+                ctx.beginPath();
+                ctx.moveTo(10, height - 10);
+                ctx.lineTo(width - 10, height - 10);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = `rgba(${0}, ${245}, ${255}, ${0.2})`;
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(10, height - 10);
+                ctx.lineTo(10 + (width - 20) * progress, height - 10);
+                ctx.lineWidth = 2;
+                ctx.shadowColor = "#00f5ff";
+                ctx.shadowBlur = 10;
+                ctx.strokeStyle = "#00f5ff";
+                ctx.stroke();
+                ctx.shadowBlur = 0;
                 requestAnimationFrame(animate);
             }
             animate();
@@ -118,8 +285,10 @@
             input.addEventListener("change", file);
             function file(event){
                 let val =  event.target.files[0];
+                if(!val) return;
                 let audio1 = URL.createObjectURL(val);
                 audio.src = audio1;
+                trackName.textContent = val.name;
             }
         </script>
     </body>
